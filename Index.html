@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Disease Prediction</title>
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background: linear-gradient(to right, #56ccf2, #2f80ed);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        .container {
+            background: #ffffff;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+            animation: slideIn 1s ease-out;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #2d3436;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #444;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #2f80ed;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #56ccf2;
+            transform: scale(1.05);
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f1f8e9;
+            border: 1px solid #c8e6c9;
+            color: #388e3c;
+            font-weight: bold;
+            border-radius: 8px;
+            display: none;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Heart Disease Prediction</h1>
+        <form id="predictionForm">
+            <!-- Input Fields -->
+            <label for="sex">Sex (0 for Male, 1 for Female)</label>
+            <input type="number" id="sex" name="sex" min="0" max="1" required>
+
+            <label for="age">Age</label>
+            <input type="number" id="age" name="age" required>
+
+            <label for="cp">Chest Pain Type</label>
+            <input type="number" id="cp" name="cp" min="0" max="3" required>
+
+            <label for="resting_BP">Resting Blood Pressure</label>
+            <input type="number" id="resting_BP" name="resting_BP" required>
+
+            <label for="chol">Cholesterol</label>
+            <input type="number" id="chol" name="chol" required>
+
+            <label for="fbs">Fasting Blood Sugar (1: True, 0: False)</label>
+            <input type="number" id="fbs" name="fbs" min="0" max="1" required>
+
+            <label for="restecg">Resting ECG Results (0, 1, or 2)</label>
+            <input type="number" id="restecg" name="restecg" min="0" max="2" required>
+
+            <label for="thalach">Maximum Heart Rate Achieved</label>
+            <input type="number" id="thalach" name="thalach" required>
+
+            <label for="exang">Exercise Induced Angina (1: Yes, 0: No)</label>
+            <input type="number" id="exang" name="exang" min="0" max="1" required>
+
+            <label for="oldpeak">ST Depression</label>
+            <input type="number" step="0.1" id="oldpeak" name="oldpeak" required>
+
+            <label for="slope">Slope of Peak Exercise ST Segment (0, 1, or 2)</label>
+            <input type="number" id="slope" name="slope" min="0" max="2" required>
+
+            <label for="ca">Number of Major Vessels Colored (0-3)</label>
+            <input type="number" id="ca" name="ca" min="0" max="3" required>
+
+            <label for="thal">Thalassemia (1: Normal, 2: Fixed Defect, 3: Reversible Defect)</label>
+            <input type="number" id="thal" name="thal" min="1" max="3" required>
+
+            <label for="max_heart_rate_reserve">Max Heart Rate Reserve</label>
+            <input type="number" id="max_heart_rate_reserve" name="max_heart_rate_reserve" required>
+
+            <label for="heart_disease_risk_score">Heart Disease Risk Score</label>
+            <input type="number" step="0.1" id="heart_disease_risk_score" name="heart_disease_risk_score" required>
+
+            <!-- Predict Button -->
+            <button type="button" id="predictButton">Predict</button>
+        </form>
+
+        <!-- Result Section -->
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        document.getElementById("predictButton").addEventListener("click", async () => {
+            const form = document.getElementById("predictionForm");
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/predict_heart_disease/?${params}`);
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch prediction, Try Again");
+                }
+
+                const data = await response.json();
+                const resultDiv = document.getElementById("result");
+                resultDiv.textContent = `Predicted Risk: ${data["Predicted Risk"]}`;
+                resultDiv.style.display = "block";
+            } catch (error) {
+                const resultDiv = document.getElementById("result");
+                resultDiv.textContent = error.message;
+                resultDiv.style.display = "block";
+            }
+        });
+    </script>
+</body>
+</html>
